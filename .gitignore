@@ -1,0 +1,7 @@
+.scala-build/
+.bsp/
+.metals/
+.vscode/
+.idea/
+.DS_Store
+target/
