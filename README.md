@@ -84,7 +84,7 @@ Mahasiswa tidak punya izin UbahNilai
 scala-cli test src test
 ```
 
-Ada 17 test: 4 untuk aturan di `Rbac` dan 13 untuk tiap sel matriks akses. Test matriks memanggil `Api.routes` langsung dengan `Request` buatan. Cara ini bisa dipakai karena `Routes` pada dasarnya fungsi dari `Request` ke `Response`.
+Ada 18 test: 4 untuk aturan di `Rbac` dan 14 untuk tiap sel matriks akses, termasuk path yang tidak cocok dengan route mana pun. Test matriks memanggil `Api.routes` langsung dengan `Request` buatan. Cara ini bisa dipakai karena `Routes` pada dasarnya fungsi dari `Request` ke `Response`.
 
 ## Lupa memasang autentikasi
 

@@ -30,6 +30,7 @@ object ApiSpec extends ZIOSpecDefault:
     ("Cici melihat nilainya sendiri",   cici,               Method.GET, "/mahasiswa/3/nilai", Status.Ok),
     ("Cici melihat nilai Dedi",         cici,               Method.GET, "/mahasiswa/4/nilai", Status.Forbidden),
     ("Dosen melihat mahasiswa 99",      budi,               Method.GET, "/mahasiswa/99/nilai", Status.NotFound),
+    ("id bukan angka, route tidak cocok", budi,             Method.GET, "/mahasiswa/abc/nilai", Status.NotFound),
     ("Admin mengubah nilai Cici",       ani,                Method.PUT, "/mahasiswa/3/nilai", Status.Ok),
     ("Dosen mengubah nilai Cici",       budi,               Method.PUT, "/mahasiswa/3/nilai", Status.Ok),
     ("Cici mengubah nilainya sendiri",  cici,               Method.PUT, "/mahasiswa/3/nilai", Status.Forbidden),
