@@ -2,7 +2,9 @@
 
 Kode demo subtopik 2 Pemrograman Fungsional (kelompok 3, Topik A: ZIO HTTP). Isinya server HTTP kecil untuk data nilai mahasiswa. Server ini menunjukkan bagaimana paradigma FP dipakai saat mengatur hak akses berbasis role (RBAC, *role-based access control*): handler sebagai fungsi, middleware sebagai higher-order function, dan aturan akses sebagai pure function.
 
-Model `User` dan `Role` sama dengan demo subtopik 1, ditambah `Aksi` dan `Nilai`.
+Model `User` dan `Role` sama dengan demo subtopik 1, ditambah `Aksi` dan `Nilai`. Selain demo utama, ada tiga contoh kecil yang bisa dijalankan sendiri.
+
+**Tidak memasang compiler?** Semua perintah di README ini disertai hasil yang diharapkan, diambil dari run asli. Bagian [Hasil yang diharapkan](#hasil-yang-diharapkan) bisa dibaca tanpa menjalankan apa pun.
 
 ## Isi repo
 
@@ -14,26 +16,114 @@ Model `User` dan `Role` sama dengan demo subtopik 1, ditambah `Aksi` dan `Nilai`
 | `src/Api.scala` | Routes untuk tiga endpoint |
 | `src/Main.scala` | Menjalankan server di port 8080 |
 | `test/` | Test aturan akses dan matriks akses, semuanya tanpa membuka port |
+| `contoh/ContohLayer.scala` | Contoh kecil ZLayer: dua service memakai satu Config yang dibangun sekali |
+| `contoh/ContohHalo.scala` | Server ZIO HTTP paling kecil, satu route |
+| `contoh/ContohMiddleware.scala` | Dua middleware buatan sendiri: menambah header dan mencatat request |
 | `contoh/Naif.scala` | Versi rawan yang mengecek role di tiap handler, sebagai pembanding |
 | `contoh/LupaAutentikasi.scala` | Sengaja gagal compile, untuk menunjukkan compiler menolak routes tanpa autentikasi |
 | `demo.sh` | Empat skenario curl untuk demo presentasi |
 | `GLOSSARY.md` | Arti istilah yang dipakai |
 
-## Menjalankan
+## Cara menjalankan
 
-Yang perlu dipasang cuma [scala-cli](https://scala-cli.virtuslab.org/install). Java tidak perlu dipasang terpisah, karena scala-cli akan mengunduh JVM 17 sendiri saat pertama kali dijalankan.
+### 1. Pasang scala-cli
+
+Yang perlu dipasang hanya [scala-cli](https://scala-cli.virtuslab.org/install). Java tidak perlu dipasang terpisah, karena scala-cli mengunduh JVM 17 sendiri saat pertama kali dijalankan.
+
+macOS dengan Homebrew:
 
 ```bash
-scala-cli run src
+brew install Virtuslab/scala-cli/scala-cli
 ```
 
-Jalankan perintah di bawah ini sekali sebelum presentasi, supaya JVM dan dependency sudah tersimpan di cache dan demo tidak bergantung pada internet kelas:
+macOS atau Linux tanpa Homebrew:
+
+```bash
+curl -sSLf https://scala-cli.virtuslab.org/get | sh
+```
+
+Untuk Windows, ikuti petunjuk di [halaman instalasi scala-cli](https://scala-cli.virtuslab.org/install).
+
+### 2. Unduh dependency sekali
+
+Run pertama mengunduh JVM, Scala, ZIO, dan ZIO HTTP (sekitar beberapa menit, tergantung internet). Setelah itu semuanya tersimpan di cache.
 
 ```bash
 scala-cli compile src test
 ```
 
-## Data contoh
+### 3. Jalankan
+
+| Tujuan | Perintah | Port |
+|---|---|---|
+| Demo SIAK | `scala-cli run src` | 8080 |
+| Test | `scala-cli test src test` | tidak ada |
+| Contoh ZLayer | `scala-cli run src/project.scala contoh/ContohLayer.scala` | tidak ada |
+| Contoh server kecil | `scala-cli run src/project.scala contoh/ContohHalo.scala` | 8081 |
+| Contoh middleware | `scala-cli run src/project.scala contoh/ContohMiddleware.scala` | 8082 |
+| Contoh gagal compile | `scala-cli compile src contoh/LupaAutentikasi.scala` | tidak ada |
+
+Server berhenti dengan Ctrl+C.
+
+## Hasil yang diharapkan
+
+Header `date` pada output curl di bawah tentu berbeda setiap kali dijalankan. Selain itu, outputnya harus sama persis.
+
+### Contoh ZLayer
+
+```bash
+scala-cli run src/project.scala contoh/ContohLayer.scala
+```
+
+```text
+membangun Config
+Halo, Pemfung!
+Sampai jumpa, Pemfung!
+```
+
+`membangun Config` hanya tercetak sekali walaupun `Sapaan` dan `Pamit` sama-sama butuh `Config`, karena layer di dalam satu `provide` dibangun sekali lalu dipakai bersama.
+
+### Contoh server kecil
+
+Jalankan `scala-cli run src/project.scala contoh/ContohHalo.scala`, lalu di terminal lain:
+
+```bash
+curl localhost:8081/halo/Pemfung
+```
+
+```text
+Halo, Pemfung!
+```
+
+### Contoh middleware
+
+Jalankan `scala-cli run src/project.scala contoh/ContohMiddleware.scala`, lalu di terminal lain:
+
+```bash
+curl -i localhost:8082/halo/Pemfung
+```
+
+```text
+HTTP/1.1 200 OK
+content-type: text/plain
+x-kelompok: 3
+date: Thu, 05 Nov 2026 02:33:09 GMT
+content-length: 14
+
+Halo, Pemfung!
+```
+
+Header `x-kelompok: 3` ditambahkan middleware `tambahHeader`. Di terminal server, middleware `catatRequest` mencetak:
+
+```text
+masuk: GET /halo/Pemfung
+```
+
+### Demo SIAK
+
+Jalankan `scala-cli run src`. Server mencetak `SIAK mini jalan di http://localhost:8080`. Di terminal lain, jalankan `./demo.sh` (berhenti di tiap skenario sampai enter ditekan), atau perintah curl di bawah satu per satu.
+
+Data contoh:
 
 | Id | Nama | Role | Token |
 |---|---|---|---|
@@ -42,9 +132,89 @@ scala-cli compile src test
 | 3 | Cici | Mahasiswa | `token-cici` |
 | 4 | Dedi | Mahasiswa | `token-dedi` |
 
-Data disimpan di memori, jadi setiap kali server dijalankan ulang, nilainya kembali ke awal.
+Data disimpan di memori, jadi setiap kali server dijalankan ulang, nilainya kembali ke awal (Cici B, Dedi A-).
 
-## Endpoint dan matriks akses
+**1. Tanpa token: 401**
+
+```bash
+curl -i localhost:8080/mahasiswa/3/nilai
+```
+
+```text
+HTTP/1.1 401 Unauthorized
+www-authenticate: Bearer realm="SIAK"
+content-length: 0
+```
+
+**2. Mahasiswa mengubah nilai: 403**
+
+```bash
+curl -i -X PUT -H "Authorization: Bearer token-cici" -d '{"mataKuliah":"Pemfung","huruf":"A"}' localhost:8080/mahasiswa/3/nilai
+```
+
+```text
+HTTP/1.1 403 Forbidden
+content-length: 36
+
+Mahasiswa tidak punya izin UbahNilai
+```
+
+**3. Dosen mengubah nilai: 200**
+
+```bash
+curl -i -X PUT -H "Authorization: Bearer token-budi" -d '{"mataKuliah":"Pemfung","huruf":"A"}' localhost:8080/mahasiswa/3/nilai
+```
+
+```text
+HTTP/1.1 200 OK
+content-type: text/plain
+content-length: 35
+
+Nilai Pemfung mahasiswa 3 menjadi A
+```
+
+**4. Mahasiswa melihat nilai orang lain: 403**
+
+```bash
+curl -i -H "Authorization: Bearer token-cici" localhost:8080/mahasiswa/4/nilai
+```
+
+```text
+HTTP/1.1 403 Forbidden
+content-length: 46
+
+Mahasiswa hanya boleh melihat nilainya sendiri
+```
+
+**5. Mahasiswa melihat nilainya sendiri: 200** (setelah skenario 3, nilainya sudah A)
+
+```bash
+curl -i -H "Authorization: Bearer token-cici" localhost:8080/mahasiswa/3/nilai
+```
+
+```text
+HTTP/1.1 200 OK
+content-type: application/json
+content-length: 38
+
+[{"mataKuliah":"Pemfung","huruf":"A"}]
+```
+
+**6. Admin melihat daftar user: 200**
+
+```bash
+curl -i -H "Authorization: Bearer token-ani" localhost:8080/admin/users
+```
+
+```text
+HTTP/1.1 200 OK
+content-type: application/json
+content-length: 160
+
+[{"id":1,"nama":"Ani","role":"Admin"},{"id":2,"nama":"Budi","role":"Dosen"},{"id":3,"nama":"Cici","role":"Mahasiswa"},{"id":4,"nama":"Dedi","role":"Mahasiswa"}]
+```
+
+### Matriks akses
 
 | Endpoint | Aksi | Admin | Dosen | Mahasiswa |
 |---|---|---|---|---|
@@ -52,41 +222,43 @@ Data disimpan di memori, jadi setiap kali server dijalankan ulang, nilainya kemb
 | `PUT /mahasiswa/{id}/nilai` | UbahNilai | 200 | 200 | 403 |
 | `GET /admin/users` | KelolaUser | 200 | 403 | 403 |
 
-Request tanpa token atau dengan token yang tidak dikenal selalu mendapat 401. Id mahasiswa yang tidak ada mendapat 404.
+Request tanpa token atau dengan token yang tidak dikenal selalu mendapat 401. Id mahasiswa yang tidak ada mendapat 404, begitu juga path yang tidak cocok dengan route mana pun (misalnya `/mahasiswa/abc/nilai`).
 
-Body untuk `PUT` berupa JSON:
-
-```json
-{"mataKuliah": "Pemfung", "huruf": "A"}
-```
-
-## Demo
-
-Jalankan server di satu terminal, lalu `demo.sh` di terminal lain. Script ini berhenti di tiap skenario sampai enter ditekan.
-
-```bash
-./demo.sh
-```
-
-Contoh hasil skenario 2, mahasiswa mencoba mengubah nilai:
-
-```text
-$ curl -i -X PUT -H "Authorization: Bearer token-cici" -d '{"mataKuliah":"Pemfung","huruf":"A"}' localhost:8080/mahasiswa/3/nilai
-HTTP/1.1 403 Forbidden
-content-length: 36
-
-Mahasiswa tidak punya izin UbahNilai
-```
-
-## Test
+### Test
 
 ```bash
 scala-cli test src test
 ```
 
-Ada 18 test: 4 untuk aturan di `Rbac` dan 14 untuk tiap sel matriks akses, termasuk path yang tidak cocok dengan route mana pun. Test matriks memanggil `Api.routes` langsung dengan `Request` buatan. Cara ini bisa dipakai karena `Routes` pada dasarnya fungsi dari `Request` ke `Response`.
+ZIO Test menjalankan test secara paralel, jadi urutan baris bisa berbeda. Isi dan baris terakhirnya harus sama:
 
-## Lupa memasang autentikasi
+```text
++ Rbac
+  + Mahasiswa hanya boleh melihat nilai miliknya
+  + Dosen boleh mengubah nilai, tapi tidak boleh mengelola user
+  + Admin punya semua izin
+  + Mahasiswa hanya boleh melihat nilai
++ Matriks akses
+  + Admin melihat nilai Cici -> 200
+  + Dosen melihat nilai Cici -> 200
+  + token tidak dikenal -> 401
+  + tanpa token -> 401
+  + Cici melihat nilainya sendiri -> 200
+  + Cici melihat nilai Dedi -> 403
+  + Dosen melihat mahasiswa 99 -> 404
+  + id bukan angka, route tidak cocok -> 404
+  + Cici mengubah nilainya sendiri -> 403
+  + Dosen melihat daftar user -> 403
+  + Dosen mengubah nilai Cici -> 200
+  + Admin mengubah nilai Cici -> 200
+  + Cici melihat daftar user -> 403
+  + Admin melihat daftar user -> 200
+18 tests passed. 0 tests failed. 0 tests ignored.
+```
+
+Test matriks memanggil `Api.routes` langsung dengan `Request` buatan. Cara ini bisa dipakai karena `Routes` pada dasarnya fungsi dari `Request` ke `Response`. Untuk memastikan test tidak lulus secara kebetulan, kami pernah sengaja memberi Dosen izin `KelolaUser` di `Rbac.izin`, dan 2 test langsung gagal.
+
+### Lupa memasang autentikasi
 
 `Api.tanpaAutentikasi` adalah routes yang belum dibungkus middleware autentikasi, sehingga tipenya masih `Routes[User & NilaiRepo & UserRepo, Response]`. Kalau routes itu langsung dijalankan server, compiler menolak:
 
@@ -100,6 +272,9 @@ scala-cli compile src contoh/LupaAutentikasi.scala
  Please provide a layer for the following type:
 
    1. siak.User
+
+1 error found
+Compilation failed
 ```
 
 Pembandingnya ada di `contoh/Naif.scala`: endpoint `DELETE` di sana lupa mengecek role, tetapi tetap lolos compile.
@@ -110,10 +285,10 @@ Pembandingnya ada di `contoh/Naif.scala`: endpoint `DELETE` di sana lupa mengece
 |---|---|
 | Pure function | `Rbac.izin`, `Rbac.boleh`, `Rbac.bolehLihatNilaiMilik` |
 | ADT dan pattern matching | `Role`, `Aksi`, dan pola route `Method.GET / "mahasiswa" / int("id") / "nilai"` |
-| Higher-order function | `Akses.autentikasi` dan `Akses.butuh(aksi)`, dipasang dengan `@@` |
-| Effect sebagai value | Setiap handler mengembalikan `ZIO[R, Response, Response]` |
+| Higher-order function | `tambahHeader`, `catatRequest`, `Akses.autentikasi`, dan `Akses.butuh(aksi)`, dipasang dengan `@@` |
+| Effect sebagai value | Setiap handler mengembalikan `ZIO[R, Response, Response]`, dan kegagalan berupa `Response` |
 | Typed environment dan ZLayer | `User` muncul di R sampai autentikasi menyediakannya; `UserRepo.live`, `NilaiRepo.live`, `Server.defaultWithPort` |
-| Immutable state | `NilaiRepo` memakai `Ref`, sehingga perubahan nilai terjadi secara atomik tanpa variabel yang di-mutate |
+| State tanpa mutasi variabel | `NilaiRepo` memakai `Ref`, sehingga perubahan nilai terjadi secara atomik |
 
 ## Catatan untuk production
 
