@@ -6,16 +6,10 @@ import zio.*
 // Database di sini simulasi, supaya contoh jalan tanpa PostgreSQL.
 // Jalankan: scala-cli run src/project.scala contoh/ContohKoneksi.scala
 case class Config(host: String, port: Int)
-
 trait Database:
   def query(sql: String): String
 
 object ContohKoneksi extends ZIOAppDefault:
-
-  private def bukaKoneksi(config: Config): Database =
-    println(s"membuka koneksi ke ${config.host}:${config.port}")
-    new Database:
-      def query(sql: String): String = s"hasil '$sql' dari ${config.host}"
 
   // 1. ULayer: tidak butuh apa-apa, tidak bisa gagal, menghasilkan Config.
   val configLayer: ULayer[Config] =
@@ -26,8 +20,9 @@ object ContohKoneksi extends ZIOAppDefault:
     ZLayer.fromZIO:
       for
         config <- ZIO.service[Config]
-        db     <- ZIO.attempt(bukaKoneksi(config)).refineToOrDie[Exception]
-      yield db
+        _ <- Console.printLine(s"membuka koneksi ke ${config.host}:${config.port}")
+      yield new Database:
+        def query(sql: String) = s"hasil '$sql' dari ${config.host}"
 
   // 3. ZIO: program butuh Database, bisa gagal dengan Exception, menghasilkan String.
   val program: ZIO[Database, Exception, String] =

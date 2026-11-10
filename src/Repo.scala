@@ -52,13 +52,10 @@ case class RefNilaiRepo(data: Ref[Map[Int, List[Nilai]]]) extends NilaiRepo:
     }
 
 object NilaiRepo:
+  private val nilaiAwal = Map(
+    3 -> List(Nilai("Pemfung", "B")),
+    4 -> List(Nilai("Pemfung", "A-"))
+  )
+
   // Layer yang pembuatannya butuh effect: Ref harus dibuat dulu.
-  val live: ULayer[NilaiRepo] = ZLayer {
-    for data <- Ref.make(
-        Map(
-          3 -> List(Nilai("Pemfung", "B")),
-          4 -> List(Nilai("Pemfung", "A-"))
-        )
-      )
-    yield RefNilaiRepo(data)
-  }
+  val live: ULayer[NilaiRepo] = ZLayer(Ref.make(nilaiAwal).map(RefNilaiRepo(_)))

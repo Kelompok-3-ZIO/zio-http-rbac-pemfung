@@ -16,12 +16,10 @@ class DbSimulasi extends Database:
 
 object Database:
   // acquireRelease: langkah pertama membuka koneksi, langkah kedua menutupnya.
-  val live: ULayer[Database] =
-    ZLayer.scoped(
-      ZIO.acquireRelease(
-        Console.printLine("membuka koneksi DB").orDie.as(DbSimulasi())
-      )(_ => Console.printLine("menutup koneksi DB").orDie)
-    )
+  private val buka  = Console.printLine("membuka koneksi DB").orDie.as(DbSimulasi())
+  private val tutup = (_: DbSimulasi) => Console.printLine("menutup koneksi DB").orDie
+
+  val live: ULayer[Database] = ZLayer.scoped(ZIO.acquireRelease(buka)(tutup))
 
 object ContohDb extends ZIOAppDefault:
 
