@@ -2,7 +2,7 @@
 
 Kode demo subtopik 2 Pemrograman Fungsional (kelompok 3, Topik A: ZIO HTTP). Isinya server HTTP kecil untuk data nilai mahasiswa. Server ini menunjukkan bagaimana paradigma FP dipakai saat mengatur hak akses berbasis role (RBAC, *role-based access control*): handler sebagai fungsi, middleware sebagai higher-order function, dan aturan akses sebagai pure function.
 
-Model `User` dan `Role` sama dengan demo subtopik 1, ditambah `Aksi` dan `Nilai`. Selain demo utama, ada tiga contoh kecil yang bisa dijalankan sendiri.
+Model `User` dan `Role` sama dengan demo subtopik 1, ditambah `Aksi` dan `Nilai`. Selain demo utama, ada beberapa contoh kecil yang bisa dijalankan sendiri.
 
 **Tidak memasang compiler?** Semua perintah di README ini disertai hasil yang diharapkan, diambil dari run asli. Bagian [Hasil yang diharapkan](#hasil-yang-diharapkan) bisa dibaca tanpa menjalankan apa pun.
 
@@ -17,6 +17,8 @@ Model `User` dan `Role` sama dengan demo subtopik 1, ditambah `Aksi` dan `Nilai`
 | `src/Main.scala` | Menjalankan server di port 8080 |
 | `test/` | Test aturan akses dan matriks akses, semuanya tanpa membuka port |
 | `contoh/ContohLayer.scala` | Contoh kecil ZLayer: dua service memakai satu Config yang dibangun sekali |
+| `contoh/ContohKoneksi.scala` | Layer koneksi database yang butuh `Config`, digabung dengan `>>>` (database simulasi) |
+| `contoh/ContohDb.scala` | Layer database dipakai server ZIO HTTP: koneksi dibuka sekali saat server mulai dan ditutup saat server berhenti |
 | `contoh/ContohHalo.scala` | Server ZIO HTTP paling kecil, satu route |
 | `contoh/ContohMiddleware.scala` | Dua middleware buatan sendiri: menambah header dan mencatat request |
 | `contoh/Naif.scala` | Versi rawan yang mengecek role di tiap handler, sebagai pembanding |
@@ -59,11 +61,13 @@ scala-cli compile src test
 | Demo SIAK | `scala-cli run src` | 8080 |
 | Test | `scala-cli test src test` | tidak ada |
 | Contoh ZLayer | `scala-cli run src/project.scala contoh/ContohLayer.scala` | tidak ada |
+| Contoh koneksi database | `scala-cli run src/project.scala contoh/ContohKoneksi.scala` | tidak ada |
+| Contoh database di server | `scala-cli run src/project.scala contoh/ContohDb.scala` | 8083 |
 | Contoh server kecil | `scala-cli run src/project.scala contoh/ContohHalo.scala` | 8081 |
 | Contoh middleware | `scala-cli run src/project.scala contoh/ContohMiddleware.scala` | 8082 |
 | Contoh gagal compile | `scala-cli compile src contoh/LupaAutentikasi.scala` | tidak ada |
 
-Server berhenti dengan Ctrl+C.
+Server berhenti dengan Ctrl+C. Berkas di `contoh/` dijalankan satu per satu. Beberapa memakai nama yang sama (`Config`, `Database`), jadi jangan dikompilasi bersamaan.
 
 ## Hasil yang diharapkan
 
@@ -82,6 +86,41 @@ Sampai jumpa, Pemfung!
 ```
 
 `membangun Config` hanya tercetak sekali walaupun `Sapaan` dan `Pamit` sama-sama butuh `Config`, karena layer di dalam satu `provide` dibangun sekali lalu dipakai bersama.
+
+### Contoh koneksi database
+
+```bash
+scala-cli run src/project.scala contoh/ContohKoneksi.scala
+```
+
+```text
+membuka koneksi ke localhost:5432
+hasil 'SELECT 1' dari localhost
+```
+
+`configLayer >>> dbLayer` menyuplai `Config` ke layer database, lalu hasilnya dipakai `program`. Database di contoh ini simulasi, jadi tidak perlu PostgreSQL.
+
+### Contoh database di server
+
+Jalankan `scala-cli run src/project.scala contoh/ContohDb.scala`. Sebelum server mulai, terminal mencetak:
+
+```text
+membuka koneksi DB
+```
+
+Di terminal lain:
+
+```bash
+curl localhost:8083/nilai/3
+curl -i localhost:8083/nilai/9
+```
+
+```text
+Nilai mahasiswa 3: A
+HTTP/1.1 404 Not Found
+```
+
+Koneksi hanya dibuka sekali walaupun ada banyak request. Saat server dihentikan dengan Ctrl+C, terminal server mencetak `menutup koneksi DB`.
 
 ### Contoh server kecil
 

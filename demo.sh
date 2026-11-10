@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Empat skenario demo di slide 20. Jalankan server dulu di terminal lain:
+# Empat skenario demo (slide "Tebak dulu" di deck). Jalankan server dulu di terminal lain:
 #   scala-cli run src
 set -u
 BASE="${BASE:-http://localhost:8080}"
