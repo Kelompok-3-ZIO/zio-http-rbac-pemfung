@@ -20,8 +20,10 @@ Model `User` dan `Role` sama dengan demo subtopik 1, ditambah `Aksi` dan `Nilai`
 | `contoh/ContohKoneksi.scala` | Layer koneksi database yang butuh `Config`, digabung dengan `>>>` (database simulasi) |
 | `contoh/ContohDb.scala` | Layer database dipakai server ZIO HTTP: koneksi dibuka sekali saat server mulai dan ditutup saat server berhenti |
 | `contoh/ContohHalo.scala` | Server ZIO HTTP paling kecil, satu route |
+| `contoh/ContohRoute.scala` | Dua route: pola `int("id")` dan route statis, tanpa autentikasi |
 | `contoh/ContohMiddleware.scala` | Dua middleware buatan sendiri: menambah header dan mencatat request |
 | `contoh/Naif.scala` | Versi rawan yang mengecek role di tiap handler, sebagai pembanding |
+| `contoh/TipeHandler.scala` | Handler `lihatNilai` dengan tipe `Handler[R, Err, In, Out]` ditulis eksplisit (di `src/Api.scala` tipenya disimpulkan compiler) |
 | `contoh/LupaAutentikasi.scala` | Sengaja gagal compile, untuk menunjukkan compiler menolak routes tanpa autentikasi |
 | `demo.sh` | Empat skenario curl untuk demo presentasi |
 | `GLOSSARY.md` | Arti istilah yang dipakai |
@@ -64,6 +66,7 @@ scala-cli compile src test
 | Contoh koneksi database | `scala-cli run src/project.scala contoh/ContohKoneksi.scala` | tidak ada |
 | Contoh database di server | `scala-cli run src/project.scala contoh/ContohDb.scala` | 8083 |
 | Contoh server kecil | `scala-cli run src/project.scala contoh/ContohHalo.scala` | 8081 |
+| Contoh route | `scala-cli run src/project.scala contoh/ContohRoute.scala` | 8085 |
 | Contoh middleware | `scala-cli run src/project.scala contoh/ContohMiddleware.scala` | 8082 |
 | Contoh gagal compile | `scala-cli compile src contoh/LupaAutentikasi.scala` | tidak ada |
 
